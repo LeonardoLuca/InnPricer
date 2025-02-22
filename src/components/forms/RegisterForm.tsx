@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -23,10 +23,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
+
 
 export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -45,7 +58,7 @@ export default function RegisterForm() {
   });
 
   const { data: locations } = useQuery({
-    queryKey: ["id" , "address"],
+    queryKey: ["id", "address"],
     queryFn: getLocations,
   });
 
@@ -61,6 +74,22 @@ export default function RegisterForm() {
       setIsLoading(false);
     }
   }
+
+  const handleBackClick = () => {
+    const formValues = form.getValues();
+    const hasFilledFields = Object.entries(formValues).some(([key, value]) => {
+      if (key === 'hotel') {
+        return Object.values(value as object).some(v => v !== '' && v !== 0);
+      }
+      return value !== '';
+    });
+
+    if (hasFilledFields) {
+      setShowDialog(true);
+    } else {
+      navigate('/');
+    }
+  };
 
   return (
     <Form {...form}>
@@ -212,10 +241,39 @@ export default function RegisterForm() {
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <div className="flex flex-col gap-4 items-center">
+          
+          <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Cadastrar
         </Button>
+        <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full max-w-[200px]"
+                onClick={handleBackClick}
+              >
+                Voltar
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Deseja realmente sair?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Os dados preenchidos serão perdidos. Tem certeza que deseja voltar para a página inicial?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => navigate("/")}>
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </form>
     </Form>
   );

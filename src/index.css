@@ -84,6 +84,123 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.contato-container {
+  max-width: full;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.contato-header {
+  margin-bottom: 30px;
+}
+
+.contato-header h2 {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.contato-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.contato-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+
+.info-item {
+  flex: 0 0 40%;
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
+}
+
+.info-item:hover {
+  transform: translateY(-5px);
+}
+
+.info-item i {
+  font-size: 24px;
+  display: flex;
+  color: #4a90e2;
+ 
+}
+
+.social-media {
+  margin-bottom: 30px;
+}
+
+.social-media h3 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #1a1a1a;
+  color: white;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+  background-color: rgba(34, 30, 30, 0.445);
+  transform: scale(1.1);
+}
+
+.contato-btn {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
+}
+
+.contato-btn:hover {
+  background-color: #3570b4;
+  transform: translateY(-2px);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .contato-info {
+      flex-direction: column;
+  }
+  
+  .info-item {
+      flex: 0 0 100%;
+      margin-bottom: 15px;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
