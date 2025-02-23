@@ -41,12 +41,12 @@ export default function LandingPage() {
             <div className="relative aspect-video max-w-4xl mx-auto">
               <iframe
                 className="w-full h-full rounded-lg shadow-lg"
-                src="https://www.youtube.com/embed/p7E96I28Hyk"
+                src="https://www.youtube.com/embed/iLsdhHUa18Q?autoplay=1&loop=1&mute=1&controls=0&modestbranding=1&rel=0&playlist=iLsdhHUa18Q"
                 title="Vídeo de Apresentação do InnPricer"
                 frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+                allow="autoplay; encrypted-media"
               ></iframe>
+
             </div>
           </div>
         </section>
