@@ -1,6 +1,6 @@
 import { BarChart, Hotel, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartComponent } from "@/components/ui/ChartComponent"; // Importando o gráfico corretamente
+import { ChartComponent } from "@/components/ui/chartComponent"; // Importando o gráfico corretamente
 
 
 export default function DashboardPage() {
