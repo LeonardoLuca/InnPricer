@@ -7,10 +7,15 @@ env:
   AWS_REGION: us-east-1
 jobs:
   build:
-    runs-on: node:22
-    script:
-      - npm ci
-      - npm run build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - run: npm ci
+      - run: npm run build
     artifacts:
       paths:
         - dist/
