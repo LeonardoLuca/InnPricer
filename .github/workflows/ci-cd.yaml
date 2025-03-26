@@ -34,5 +34,10 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+      - name: Retrieve saved Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
       - name: Sync Bucket
         run: aws s3 sync dist/ s3://${{ secrets.BUCKET_NAME }} --delete
