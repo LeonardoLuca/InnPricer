@@ -7,6 +7,7 @@ env:
   AWS_REGION: us-east-1
 jobs:
   build:
+    runs-on: node:22
     script:
       - npm ci
       - npm run build
@@ -15,7 +16,7 @@ jobs:
         - dist/
   deploy:
     name: Deploy
-    runs-on: node:22
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
