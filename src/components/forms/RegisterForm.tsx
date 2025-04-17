@@ -62,6 +62,9 @@ export default function RegisterForm() {
     queryFn: getLocations,
   });
 
+  console.log("Locations:", locations);
+  console.log("Is Loading:", isLoading);
+
   async function onSubmit(data: RegisterFormData) {
     try {
       setIsLoading(true);
