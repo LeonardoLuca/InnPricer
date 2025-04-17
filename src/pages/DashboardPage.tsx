@@ -1,16 +1,57 @@
+import { useEffect, useState } from "react";
 import { BarChart, Hotel, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartComponent } from "@/components/ui/chartComponent"; // Importando o gráfico corretamente
-
+import { ChartComponent } from "@/components/ui/chartComponent";
+import { getPredictions } from "@/services/api";
 
 export default function DashboardPage() {
+  const [predictions, setPredictions] = useState<PredictionsResponse | null>(null);
+  //const [predictions, setPredictions] = useState<PredictionsResponse | null>(null);
 
-  // Lista de hotéis e seus preços
+  const [loading, setLoading] = useState(true);
+
+  // Lista de hotéis (mantida como está por enquanto)
   const hotels = [
     { name: "Hotel A", price: 250.00 },
     { name: "Hotel B", price: 320.00 },
     { name: "Hotel C", price: 180.00 },
   ];
+
+  useEffect(() => {
+    const fetchPredictions = async () => {
+      const today = new Date();
+      const startDate = today.toISOString().split('T')[0]; // Data atual no formato YYYY-MM-DD
+      const endDate = new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 10 dias no futuro
+
+      try {
+        const data = await getPredictions(startDate, endDate);
+        setPredictions(data);
+      } catch (error) {
+        console.error('Erro ao buscar previsões:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPredictions();
+  }, []);
+
+  interface Prediction {
+    date: string;
+    prediction: number;
+  }
+
+  interface PredictionsResponse {
+    start: string;
+    end: string;
+    predictions: Prediction[];
+  }
+
+// Obter a previsão do dia atual
+const today = new Date().toISOString().split('T')[0];
+const todayPrediction = predictions?.predictions.find(p => p.date === today)?.prediction;
+
+// Calcular a média das previsões
+const averagePrediction = predictions && predictions.predictions.length > 0 ? predictions.predictions.reduce((sum: number, p: Prediction) => sum + p.prediction, 0) / predictions.predictions.length : 0;
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -20,34 +61,40 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Preço Recomendado
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Preço Recomendado</CardTitle>
             <Hotel className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$112,00</div>
-            <p className="text-xs text-muted-foreground">
-              +12% em relação a semana anterior
-            </p>
+            {loading ? (
+              <div>Carregando...</div>
+            ) : todayPrediction ? (
+              <>
+                <div className="text-2xl font-bold">R${todayPrediction.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">+12% em relação a mês anterior</p>
+              </>
+            ) : (
+              <div>Previsão não disponível para hoje</div>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Análise Média do Concorrentes
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Análise Média do Concorrentes</CardTitle>
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 280,00</div>
-            <p className="text-xs text-muted-foreground">
-              +5% em relação a semana anterior
-            </p>
+            {loading ? (
+              <div>Carregando...</div>
+            ) : averagePrediction ? (
+              <>
+                <div className="text-2xl font-bold">R${averagePrediction.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">+5% em relação a mês anterior</p>
+              </>
+            ) : (
+              <div>Média não disponível</div>
+            )}
           </CardContent>
         </Card>
-        
-        {/* Card de Hóspedes Ativos com a lista de hotéis */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Análise dos Concorrentes</CardTitle>
@@ -67,12 +114,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Gráfico */}
       <div className="mt-12 w-full">
         <ChartComponent />
       </div>
-
-    </div >
+    </div>
   );
 }
