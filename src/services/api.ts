@@ -107,6 +107,7 @@ export const getPredictions = async (start: string, end: string) => {
       range_type: 'ranged'
     }
   });
+  
   return response.data;
 };
 

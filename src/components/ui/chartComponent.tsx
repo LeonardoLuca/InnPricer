@@ -28,7 +28,18 @@ import {
 } from "@/components/ui/chart";
 import { getPredictions } from "@/services/api";
 
-// Definição do tipo dos dados do gráfico
+// Definição dos tipos
+interface Prediction {
+  date: string;
+  prediction: number;
+}
+
+interface PredictionsResponse {
+  start: string;
+  end: string;
+  predictions: Prediction[];
+}
+
 interface ChartData {
   time: string;
   value: number;
@@ -43,15 +54,24 @@ const chartConfig: ChartConfig = {
 };
 
 export function ChartComponent() {
-  const [chartPredictions, setChartPredictions] = useState<any>(null);
+  const [chartPredictions, setChartPredictions] = useState<PredictionsResponse | null>(null);
   const [timeRange, setTimeRange] = useState("1m");
 
   // Buscar dados da API
   useEffect(() => {
     const fetchData = async () => {
       const today = new Date();
-      const sixMonthsBefore = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const sixMonthsAfter = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      // Calcular 6 meses antes
+      const startDate = new Date(today);
+      startDate.setMonth(today.getMonth() - 6);
+      const sixMonthsBefore = startDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
+      // Calcular 6 meses depois
+      const endDate = new Date(today);
+      endDate.setMonth(today.getMonth() + 6);
+      const sixMonthsAfter = endDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
       try {
         const data = await getPredictions(sixMonthsBefore, sixMonthsAfter);
         setChartPredictions(data);
@@ -62,15 +82,10 @@ export function ChartComponent() {
     fetchData();
   }, []);
 
-  interface Prediction {
-    date: string;
-    prediction: number;
-  }
-
   // Mapear os dados da API para o formato do gráfico
-  const chartData: ChartData[] = chartPredictions?.predictions.map((p: Prediction)=> ({
+  const chartData: ChartData[] = chartPredictions?.predictions.map((p: Prediction) => ({
     time: p.date,
-    value: p.prediction
+    value: p.prediction,
   })) || [];
 
   // Filtrar dados com base no intervalo selecionado
@@ -81,10 +96,6 @@ export function ChartComponent() {
     let endDate: Date;
 
     switch (timeRange) {
-      case "1m":
-        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-        endDate = today;
-        break;
       case "3m":
         startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
         endDate = today;
@@ -92,10 +103,6 @@ export function ChartComponent() {
       case "6m":
         startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
         endDate = today;
-        break;
-      case "1m_future":
-        startDate = today;
-        endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
         break;
       case "3m_future":
         startDate = today;
@@ -110,7 +117,7 @@ export function ChartComponent() {
         endDate = new Date(chartPredictions.end);
     }
 
-    return chartData.filter(d => {
+    return chartData.filter((d) => {
       const date = new Date(d.time);
       return date >= startDate && date <= endDate;
     });

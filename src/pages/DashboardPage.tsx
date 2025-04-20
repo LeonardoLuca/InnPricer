@@ -20,8 +20,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchPredictions = async () => {
       const today = new Date();
-      const startDate = today.toISOString().split('T')[0]; // Data atual no formato YYYY-MM-DD
-      const endDate = new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 10 dias no futuro
+      const startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const endDate = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
       try {
         const data = await getPredictions(startDate, endDate);
@@ -34,6 +34,8 @@ export default function DashboardPage() {
     };
     fetchPredictions();
   }, []);
+
+  console.log("Predctions:", predictions);
 
   interface Prediction {
     date: string;
@@ -52,6 +54,8 @@ const todayPrediction = predictions?.predictions.find(p => p.date === today)?.pr
 
 // Calcular a média das previsões
 const averagePrediction = predictions && predictions.predictions.length > 0 ? predictions.predictions.reduce((sum: number, p: Prediction) => sum + p.prediction, 0) / predictions.predictions.length : 0;
+
+console.log("Avarege predctions:", averagePrediction);
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
