@@ -2,13 +2,13 @@ import axios from 'axios';
 
 
 
-// const api = axios.create({
-//   baseURL: 'http://ecs-innpricer-back-load-balancer-1190307592.us-east-1.elb.amazonaws.com/api/',
-// });
-
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/',
+  baseURL: 'http://ecs-innpricer-back-load-balancer-1190307592.us-east-1.elb.amazonaws.com/api/',
 });
+
+// const api = axios.create({
+//   baseURL: 'http://127.0.0.1:8000/api/',
+// });
 
 // Clear tokens when accessing registration page
 export const clearTokens = () => {

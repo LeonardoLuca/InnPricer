@@ -48,65 +48,69 @@ interface ChartData {
 // Configuração do gráfico
 const chartConfig: ChartConfig = {
   value: {
-    label: "Valor",
+    label: "Preço",
     color: "hsl(var(--chart-3))",
   },
 };
 
 export function ChartComponent() {
   const [chartPredictions, setChartPredictions] = useState<PredictionsResponse | null>(null);
-  const [timeRange, setTimeRange] = useState("1m");
+  const [timeRange, setTimeRange] = useState("1m_past");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Buscar dados da API
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       const today = new Date();
-
-      // Calcular 6 meses antes
-      const startDate = new Date(today);
-      startDate.setMonth(today.getMonth() - 6);
-      const sixMonthsBefore = startDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-
-      // Calcular 6 meses depois
-      const endDate = new Date(today);
-      endDate.setMonth(today.getMonth() + 6);
-      const sixMonthsAfter = endDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      const startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const endDate = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
       try {
-        const data = await getPredictions(sixMonthsBefore, sixMonthsAfter);
+        const data = await getPredictions(startDate, endDate);
         setChartPredictions(data);
-      } catch (error) {
-        console.error('Erro ao buscar dados do gráfico:', error);
+      } catch (error: any) {
+        console.error("Erro ao buscar dados do gráfico:", error);
+        setError("Não foi possível carregar os dados do gráfico. Verifique a conexão com o servidor.");
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  // Mapear os dados da API para o formato do gráfico
   const chartData: ChartData[] = chartPredictions?.predictions.map((p: Prediction) => ({
     time: p.date,
     value: p.prediction,
   })) || [];
 
-  // Filtrar dados com base no intervalo selecionado
-  const getFilteredData = () => {
+  const getFilteredData = (): ChartData[] => {
     if (!chartPredictions) return [];
     const today = new Date();
     let startDate: Date;
     let endDate: Date;
 
     switch (timeRange) {
-      case "3m":
-        startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+      case "1m_past":
+        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
         endDate = today;
         break;
-      case "6m":
-        startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
+      case "1m_future":
+        startDate = today;
+        endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        break;
+      case "3m_past":
+        startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
         endDate = today;
         break;
       case "3m_future":
         startDate = today;
         endDate = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
+        break;
+      case "6m_past":
+        startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
+        endDate = today;
         break;
       case "6m_future":
         startDate = today;
@@ -117,10 +121,12 @@ export function ChartComponent() {
         endDate = new Date(chartPredictions.end);
     }
 
-    return chartData.filter((d) => {
-      const date = new Date(d.time);
-      return date >= startDate && date <= endDate;
-    });
+    return chartData
+      .filter((d) => {
+        const date = new Date(d.time);
+        return date >= startDate && date <= endDate;
+      })
+      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
   };
 
   return (
@@ -135,47 +141,56 @@ export function ChartComponent() {
             <SelectValue placeholder="Último mês" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="1m" className="rounded-lg">Último mês</SelectItem>
-            <SelectItem value="3m" className="rounded-lg">Últimos 3 meses</SelectItem>
-            <SelectItem value="6m" className="rounded-lg">Últimos 6 meses</SelectItem>
+            <SelectItem value="1m_past" className="rounded-lg">Último mês</SelectItem>
             <SelectItem value="1m_future" className="rounded-lg">Próximo mês</SelectItem>
+            <SelectItem value="3m_past" className="rounded-lg">Últimos 3 meses</SelectItem>
             <SelectItem value="3m_future" className="rounded-lg">Próximos 3 meses</SelectItem>
+            <SelectItem value="6m_past" className="rounded-lg">Últimos 6 meses</SelectItem>
             <SelectItem value="6m_future" className="rounded-lg">Próximos 6 meses</SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-          <LineChart data={getFilteredData()}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="time"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => new Date(value).toLocaleDateString()}
-              minTickGap={32}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <ChartTooltip
-              cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
-              content={<ChartTooltipContent indicator="line" />}
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="var(--color-value)"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, strokeWidth: 2 }}
-            />
-            <ChartLegend content={<ChartLegendContent />} />
-          </LineChart>
-        </ChartContainer>
+        {loading ? (
+          <p>Carregando dados...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : chartPredictions ? (
+          <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+            <LineChart data={getFilteredData()}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="time"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                minTickGap={32}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => `R$${value.toFixed(2)}`}
+              />
+              <ChartTooltip
+                cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
+                content={<ChartTooltipContent indicator="line" valueFormatter={(value) => `R$${value.toFixed(2)}`} />}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="var(--color-value)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 2 }}
+              />
+              <ChartLegend content={<ChartLegendContent />} />
+            </LineChart>
+          </ChartContainer>
+        ) : (
+          <p>Nenhum dado recebido da API.</p>
+        )}
       </CardContent>
       <CardFooter>
         <div className="flex w-full items-start gap-2 text-sm">
@@ -184,7 +199,7 @@ export function ChartComponent() {
               Última atualização <TrendingUp className="h-4 w-4" />
             </div>
             <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              Atualizado em {new Date().toLocaleTimeString()}
+              Atualizado em {new Date().toLocaleTimeString("pt-BR")}
             </div>
           </div>
         </div>
