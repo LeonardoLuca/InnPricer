@@ -35,8 +35,6 @@ interface Prediction {
 }
 
 interface PredictionsResponse {
-  start: string;
-  end: string;
   predictions: Prediction[];
 }
 
@@ -55,7 +53,7 @@ const chartConfig: ChartConfig = {
 
 export function ChartComponent() {
   const [chartPredictions, setChartPredictions] = useState<PredictionsResponse | null>(null);
-  const [timeRange, setTimeRange] = useState("1m_past");
+  const [timeRange, setTimeRange] = useState("1m_future");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,16 +61,14 @@ export function ChartComponent() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      const today = new Date();
-      const startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-      const endDate = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
       try {
-        const data = await getPredictions(startDate, endDate);
+        const data = await getPredictions();
+        console.log("Chart Predictions:", data); // Log para depuração
         setChartPredictions(data);
       } catch (error: any) {
         console.error("Erro ao buscar dados do gráfico:", error);
-        setError("Não foi possível carregar os dados do gráfico. Verifique a conexão com o servidor.");
+        setError("Não foi possível carregar os dados do gráfico. O serviço de previsões está indisponível.");
       } finally {
         setLoading(false);
       }
@@ -80,53 +76,46 @@ export function ChartComponent() {
     fetchData();
   }, []);
 
+  // Arredondar os valores para 2 casas decimais durante o mapeamento
   const chartData: ChartData[] = chartPredictions?.predictions.map((p: Prediction) => ({
     time: p.date,
-    value: p.prediction,
+    value: Number(p.prediction.toFixed(2)), // Arredondar para 2 casas decimais
   })) || [];
+
+  // Definindo o valor mínimo para o eixo Y, com proteção contra array vazio
+  const fetchMin = chartData.length > 0 ? Math.min(...chartData.map((d) => d.value)) - 10 : 0;
 
   const getFilteredData = (): ChartData[] => {
     if (!chartPredictions) return [];
     const today = new Date();
-    let startDate: Date;
+    today.setHours(0, 0, 0, 0);
+
     let endDate: Date;
 
     switch (timeRange) {
-      case "1m_past":
-        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-        endDate = today;
-        break;
       case "1m_future":
-        startDate = today;
         endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
         break;
-      case "3m_past":
-        startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
-        endDate = today;
-        break;
       case "3m_future":
-        startDate = today;
         endDate = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
         break;
-      case "6m_past":
-        startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
-        endDate = today;
-        break;
       case "6m_future":
-        startDate = today;
         endDate = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000);
         break;
       default:
-        startDate = new Date(chartPredictions.start);
-        endDate = new Date(chartPredictions.end);
+        endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
     }
 
-    return chartData
+    const filteredData = chartData
       .filter((d) => {
         const date = new Date(d.time);
-        return date >= startDate && date <= endDate;
+        date.setHours(0, 0, 0, 0);
+        return date >= today && date <= endDate;
       })
       .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+    console.log("Filtered Chart Data:", filteredData); // Log para depuração
+    return filteredData;
   };
 
   return (
@@ -138,14 +127,11 @@ export function ChartComponent() {
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger className="w-[160px] rounded-lg sm:ml-auto" aria-label="Selecionar intervalo de tempo">
-            <SelectValue placeholder="Último mês" />
+            <SelectValue placeholder="Próximo mês" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="1m_past" className="rounded-lg">Último mês</SelectItem>
             <SelectItem value="1m_future" className="rounded-lg">Próximo mês</SelectItem>
-            <SelectItem value="3m_past" className="rounded-lg">Últimos 3 meses</SelectItem>
             <SelectItem value="3m_future" className="rounded-lg">Próximos 3 meses</SelectItem>
-            <SelectItem value="6m_past" className="rounded-lg">Últimos 6 meses</SelectItem>
             <SelectItem value="6m_future" className="rounded-lg">Próximos 6 meses</SelectItem>
           </SelectContent>
         </Select>
@@ -171,11 +157,12 @@ export function ChartComponent() {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => `R$${value.toFixed(2)}`}
+                tickFormatter={(value) => `R$${value.toFixed(2)}`} // Já correto
+                domain={[fetchMin, "dataMax + 10"]}
               />
               <ChartTooltip
                 cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
-                content={<ChartTooltipContent indicator="line" valueFormatter={(value) => `R$${value.toFixed(2)}`} />}
+                content={<ChartTooltipContent indicator="line" valueFormatter={(value) => `R$${value.toFixed(2)}`} />} // Já correto
               />
               <Line
                 type="monotone"
