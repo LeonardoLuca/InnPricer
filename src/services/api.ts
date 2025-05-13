@@ -1,9 +1,14 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'http://ecs-innpricer-back-load-balancer-1190307592.us-east-1.elb.amazonaws.com/api/',
-});
 
+
+// const api = axios.create({
+//   baseURL: 'http://ecs-innpricer-back-load-balancer-1190307592.us-east-1.elb.amazonaws.com/api/',
+// });
+
+const api = axios.create({
+  baseURL: 'http://127.0.0.1:8000/api/',
+});
 
 // Clear tokens when accessing registration page
 export const clearTokens = () => {
@@ -42,7 +47,9 @@ api.interceptors.response.use(
         }
 
         // Try to refresh the token
-        const response = await axios.post('http://ecs-innpricer-back-load-balancer-1190307592.us-east-1.elb.amazonaws.com/api/token/refresh/', {
+        // const response = await axios.post('http://ecs-innpricer-back-load-balancer-1190307592.us-east-1.elb.amazonaws.com/api/token/refresh/', {
+        const response = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {
+        
           refresh: refreshToken,
         });
 
@@ -91,6 +98,16 @@ export const getLocations = async () => {
 
 export const getUserProfile = async () => {
   const response = await api.get('/accounts/me/');
+  return response.data;
+};
+
+export const getPredictions = async () => {
+  const response = await api.get('/predictions', {
+    params: {
+      range_type: 'full'
+    }
+  });
+  
   return response.data;
 };
 
