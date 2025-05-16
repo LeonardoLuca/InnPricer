@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
 import { BarChart, Hotel, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartComponent } from "@/components/ui/chartComponent"; // Importando o gráfico corretamente
-
+import { ChartComponent } from "@/components/ui/chartComponent";
+import { getPredictions } from "@/services/api";
 
 export default function DashboardPage() {
   const [predictions, setPredictions] = useState<PredictionsResponse | null>(null);
@@ -134,7 +135,6 @@ export default function DashboardPage() {
       <div className="mt-12 w-full">
         <ChartComponent />
       </div>
-
-    </div >
+    </div>
   );
 }
