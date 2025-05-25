@@ -46,7 +46,7 @@ export default function DashboardPage() {
   // Obter a previsão do dia atual ou a mais próxima no futuro
   const today = new Date().toISOString().split('T')[0];
   const todayDate = new Date(today);
-  const nearestFuturePrediction = predictions?.predictions
+  const nearestFuturePrediction:any = predictions?.predictions
     .filter(p => new Date(p.date) >= todayDate)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
